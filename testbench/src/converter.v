@@ -25,19 +25,6 @@ reg [3 :0] stack_counter = 0, program_selector = 3'b0, selector_setter = GET_DAT
 reg [7 :0] output_data;
 reg job_done = 0, out_ack = 0;
 
-//******************************************FILE_OPEN***********************************************
-integer file, count, file_error;
-
-initial
-	begin
-		file = $fopen("input.txt", "r");
-		if(file == 0) begin
-			$display("ERROR, couldn't open file");
-			$finish;
-		end
-	end
-//**************************************************************************************************
-
 //*******************************************STACK**************************************************
 reg          push_stb;
 reg  [31:0]  push_dat;
@@ -58,133 +45,110 @@ stack stck
 		  .PUSH_ACK(push_ack)
 	  );
 //**************************************************************************************************
+always @(posedge CLK) begin
+	casex (selector_setter)
+		GET_DATA:
+
+	endcase
+
+	program_selector <= selector_setter;
+end
+
+always @(posedge CLK) begin
+	if(sth) push_stb <= 1;
+	else if (push_stb & push_ack) begin
+		push_stb <= 0;
+		stack_counter++;
+	end
+end
+
+always @(posedge CLK) begin
+	if(program_selector == CHECK_PREC || program_selector == PRINT_STACK) begin
+		if(count != 0 && stack_counter != 0) begin
+		pop_stb <= 1;
+		stack_tmp <= pop_dat;
+		end
+	end
+	else if (pop_stb && pop_ack) begin
+		pop_stb <= 0;
+		stack_counter--;
+ 	end
+end
+
+always @(OUT) begin
+	out_ack <= 1; @(posedge CLK);
+	out_ack <= 0; @(posedge CLK);
+end
 
 always @(posedge CLK) if (!RST && REC_ACK) begin
-	program_selector = selector_setter; @(posedge CLK);
+	program_selector = selector_setter;
 	casex (program_selector)
 		GET_DATA: begin
-			count = $fgets(data, file); @(posedge CLK);
 			if(count != 0) begin
 				casex (data)
 					11018, 43: begin
-						data = "+";
-						selector_setter = CHECK_PREC;
+						data <= "+";
+						selector_setter <= CHECK_PREC;
 					end
 
 					11530, 45: begin
-						data = "-";
-						selector_setter = CHECK_PREC;
+						data <= "-";
+						selector_setter <= CHECK_PREC;
 					end
 
 					10762, 42: begin
-						data = "*";
-						selector_setter = CHECK_PREC;
+						data <= "*";
+						selector_setter <= CHECK_PREC;
 					end
 
 					12042, 47: begin
-						data = "/";
-						selector_setter = CHECK_PREC;
-					end
-
-					10250, 40: begin
-						data = "("; @(posedge CLK);
-						selector_setter = CHECK_PREC;
-					end
-
-					10506, 41: begin
-						data = ")"; @(posedge CLK);
-						selector_setter = CHECK_PREC;
+						data <= "/";
+						selector_setter <= CHECK_PREC;
 					end
 
 					default: begin
-						selector_setter = PRINT_NUM;
+						selector_setter <= PRINT_NUM;
 					end
 				endcase
 			end
 			else begin
-				selector_setter = PRINT_STACK;
+				selector_setter <= PRINT_STACK;
 			end
 		end
 
 		CHECK_PREC: begin
 			if (count != 0 && stack_counter != 0) begin
-				pop_stb <= 1; @(posedge CLK);
-				stack_tmp = pop_dat;
-				pop_stb <= 0; @(posedge CLK);
-				stack_counter--;
-				if (data == 43) begin //handling "+"
-					if(stack_tmp == 1) begin
-						OUT <= data;
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else if (stack_tmp == 2) begin
-						OUT <= "-";
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
+				if (data == 43 || data == 45) begin //handling "+" and "-"
+					if(stack_tmp == 1 || stack_tmp == 2) begin
+						casex (stack_tmp)
+							1: OUT <= "+";
+							2: OUT <= "-";
+						endcase
+						selector_setter <= PUSH_DATA;
 					end else begin
-						selector_setter = PUSH_BACK;
+						selector_setter <= PUSH_BACK;
 					end
 				end
 
-				else if (data == 45) begin //handling "-"
-					if(stack_tmp == 1) begin
-						OUT <= "+";
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else if (stack_tmp == 2) begin
-						OUT <= data;
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
+				else if (data == 42 || data == 47) begin //handling "*"	and "/"
+					if(stack_tmp == 1 || stack_tmp == 2) begin
+						selector_setter <= PUSH_BACK;
 					end else begin
-						selector_setter = PUSH_BACK;
-					end
-				end
-
-				else if (data == 42) begin //handling "*"
-					if(stack_tmp == 3) begin
-						OUT <= data;
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else if (stack_tmp == 4) begin
-						OUT <= "/";
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else begin
-						selector_setter = PUSH_BACK;
-					end
-				end
-
-				else if (data == 47) begin //handling "/"
-					if(stack_tmp == 3) begin
-						OUT <= "*";
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else if (stack_tmp == 4) begin
-						OUT <= data;
-						out_ack <= 1; @(posedge CLK);
-						out_ack <= 0; @(posedge CLK);
-						selector_setter = PUSH_DATA;
-					end else begin
-						selector_setter = PUSH_BACK;
+						casex (stack_tmp)
+							3: OUT <= "*";
+							4: OUT <= "/";
+						endcase
+						selector_setter <= PUSH_DATA;
 					end
 				end
 			end else begin
-				selector_setter = PUSH_FIRST_STACK;
+				selector_setter <= PUSH_FIRST_STACK;
 			end
 		end
 
 		PRINT_NUM: begin
 			file_error = !$sscanf(data, "%d", OUT);
-			out_ack <= 1; @(posedge CLK);
-			out_ack <= 0; @(posedge CLK);
-			selector_setter = GET_DATA;
+			selector_setter <= GET_DATA;
 		end
 
 		PUSH_FIRST_STACK: begin
@@ -195,10 +159,7 @@ always @(posedge CLK) if (!RST && REC_ACK) begin
 				"/": push_dat <= 4;
 			endcase
 
-			push_stb <= 1; @(posedge CLK);
-			push_stb <= 0; @(posedge CLK);
-			stack_counter++;
-			selector_setter = GET_DATA;
+			selector_setter <= GET_DATA;
 		end
 
 		PUSH_DATA: begin
@@ -209,10 +170,7 @@ always @(posedge CLK) if (!RST && REC_ACK) begin
 				"/": push_dat <= 4;
 			endcase
 
-			push_stb <= 1; @(posedge CLK);
-			push_stb <= 0; @(posedge CLK);
-			stack_counter++;
-			selector_setter = GET_DATA;
+			selector_setter <= CHECK_PREC;
 		end
 
 		PUSH_BACK: begin
@@ -223,10 +181,6 @@ always @(posedge CLK) if (!RST && REC_ACK) begin
 				"/": push_dat <= 4;
 			endcase
 
-			push_stb <= 1; @(posedge CLK);
-			push_stb <= 0; @(posedge CLK);
-			stack_counter++;
-
 			casex (data)
 				"+": push_dat <= 1;
 				"-": push_dat <= 2;
@@ -234,16 +188,13 @@ always @(posedge CLK) if (!RST && REC_ACK) begin
 				"/": push_dat <= 4;
 			endcase
 
-			push_stb <= 1; @(posedge CLK);
-			push_stb <= 0; @(posedge CLK);
-			stack_counter++;
-			selector_setter = GET_DATA;
+			selector_setter <= GET_DATA;
 		end
 
 		PRINT_STACK: begin
 			if(stack_counter != 0) begin
 				pop_stb <= 1; @(posedge CLK);
-				stack_tmp = pop_dat;
+				stack_tmp <= pop_dat;
 				pop_stb <= 0; @(posedge CLK);
 				stack_counter--;
 
@@ -253,18 +204,16 @@ always @(posedge CLK) if (!RST && REC_ACK) begin
 					3: OUT <= "*";
 					4: OUT <= "/";
 				endcase
-				out_ack <= 1; @(posedge CLK);
-				out_ack <= 0; @(posedge CLK);
 
-				selector_setter = PRINT_STACK;
+				selector_setter <= PRINT_STACK;
 			end
 			else begin
-				selector_setter = FINISHED;
+				selector_setter <= FINISHED;
 			end
 		end
 
 		FINISHED: begin
-			job_done = 1;
+			job_done <= 1;
 		end
 	endcase
 end
