@@ -73,15 +73,20 @@ module testbench();
          (
              .RST(RST),
              .CLK(CLK),
+             .BUSY(busy),
+
 
              .INPUT_SIGN(input_sign),
-             .INPUT_NUMBER(input_number),
              .SIGN_STB(input_sign_stb),
-             .NUMBER_STB(input_number_stb),
-
              .SIGN_OUT(),
+             .SIGN_OUT_STB(so_stb),
+             .SIGN_OUT_ACK(1),
+
+             .INPUT_NUMBER(input_number),
+             .NUMBER_STB(input_number_stb),
              .NUMBER_OUT(),
-             .BUSY(busy)
+             .NUMBER_OUT_STB(no_stb),
+             .NUMBER_OUT_ACK(1)
          );
 
 
