@@ -50,7 +50,7 @@ parameter GET_DATA = 1, //get value from file
           PRINT_FROM_STACK = 8, //print from stack when readed sign priority is less than top stack
           CLEAR_SIGN_STROBE = 9, //needed to clear sign strobe in printing signs from stack
           CLEAR_SIGN_STROBE_2 = 10, //needed to clear sign strobe in printing single sign from stack
-          FINISHED = 11; //job done, gtfo
+          FINISHED = 11; //job done
 //**************************************************************************************************
 
 //****************************************AUXILIARY*************************************************
@@ -62,7 +62,7 @@ reg        so_stb, no_stb;
 //**************************************************************************************************
 
 //*****************************************MAIN CODE************************************************
-always @(posedge CLK) begin
+always @(posedge CLK) if(!SIGN_OUT_ACK || !NUMBER_OUT_ACK || RST) begin
     if(RST) begin
         NUMBER_OUT <= 0;
         SIGN_OUT <= 0;
