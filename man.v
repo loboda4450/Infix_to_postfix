@@ -29,10 +29,8 @@ parameter GET_DATA    = 1,
 
 always @(posedge CLK)  begin
     if(RST) begin
-        out <= 0;
         busy = 0;
         num_stack_ptr <= 0;
-        sign_stack_ptr <= 0;
         result <= 0;
         selector_setter <= GET_DATA;
     end else begin
