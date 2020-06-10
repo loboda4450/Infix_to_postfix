@@ -226,8 +226,8 @@ always @(posedge CLK) begin
             end
 
             FINISHED: begin
-                so_stb <= 0;
-                no_stb <= 0;
+                so_stb <= 1;
+                no_stb <= 1;
             end
         endcase
     end
