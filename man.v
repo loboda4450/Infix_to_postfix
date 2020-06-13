@@ -59,7 +59,6 @@ always @(posedge CLK)  begin
                         end
                     endcase
 
-
                     selector_setter <= PUSH_NUM;
 
                 end else if(NUMBER_STB) begin

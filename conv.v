@@ -214,14 +214,15 @@ always @(posedge CLK) begin
                         4: SIGN_OUT <= "/";
                     endcase
                     so_stb <= 1;
-                    selector_setter = CLEAR_SIGN_STROBE;
+                    selector_setter <= CLEAR_SIGN_STROBE;
                 end else if(stack_counter == 0) begin
-                    selector_setter = FINISHED;
+                    selector_setter <= FINISHED;
                 end
             end
 
             CLEAR_SIGN_STROBE: begin
                 so_stb <= 0;
+                if(stack_counter != 0) pop_stb <= 1;
                 selector_setter <= PRINT_STACK;
             end
 
