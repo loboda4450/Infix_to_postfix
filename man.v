@@ -50,18 +50,10 @@ always @(posedge CLK) begin
                     stmp = num_stack[num_stack_ptr - 1];
 
                     casex (INPUT_SIGN)
-                        "+": begin
-                            tmp <= (ftmp + stmp);
-                        end
-                        "-": begin
-                            tmp <= (ftmp - stmp);
-                        end
-                        "*": begin
-                            tmp <= (ftmp * stmp);
-                        end
-                        "/": begin
-                            tmp <= (stmp / ftmp);
-                        end
+                        "+": tmp <= (ftmp + stmp);
+                        "-": tmp <= (ftmp - stmp);
+                        "*": tmp <= (ftmp * stmp);
+                        "/": tmp <= (stmp / ftmp);
                     endcase
 
                     selector_setter <= PUSH_NUM;
