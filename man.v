@@ -80,18 +80,10 @@ always @(posedge CLK) begin
 
             FINISHED: begin
                 casex (INPUT_SIGN)
-                    "+": begin
-                        result <= (num_stack[0] + num_stack[1]);
-                    end
-                    "-": begin
-                        result <= (num_stack[0] - num_stack[1]);
-                    end
-                    "*": begin
-                        result <= (num_stack[0] * num_stack[1]);
-                    end
-                    "/": begin
-                        result <= (num_stack[0] / num_stack[1]);
-                    end
+                    "+": result <= (num_stack[0] + num_stack[1]);
+                    "-": result <= (num_stack[0] - num_stack[1]);
+                    "*": result <= (num_stack[0] * num_stack[1]);
+                    "/": result <= (num_stack[0] / num_stack[1]);
                 endcase
             end
         endcase
