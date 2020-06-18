@@ -4,12 +4,13 @@ module man
     input  wire        CLK,
     output wire        BUSY,
     output wire [7:0]  OUT,
+    output wire        OUT_STB,
 
     input  wire [7:0]  INPUT_SIGN,
     input  wire        SIGN_STB,
 
     input  wire [7:0]  INPUT_NUMBER,
-    input  wire        NUMBER_STB,
+    input  wire        NUMBER_STB
 );
 
 //*******************************************STACK**************************************************
@@ -18,9 +19,9 @@ reg [3: 0] num_stack_ptr;
 //**************************************************************************************************
 
 //***********************************DEFINING "JUMP POINTS"*****************************************
-parameter GET_DATA    = 1,
-          PUSH_NUM    = 2,
-          FINISHED    = 3;
+parameter GET_DATA = 1,
+          PUSH_NUM = 2,
+          FINISHED = 3;
 //**************************************************************************************************
 
 //****************************************AUXILIARY*************************************************
@@ -31,7 +32,7 @@ reg [31:0] result;
 //**************************************************************************************************
 
 //*****************************************MAIN CODE************************************************
-always @(posedge CLK)  begin
+always @(posedge CLK) begin
     if(RST) begin
         busy = 0;
         num_stack_ptr <= 0;
@@ -99,6 +100,7 @@ end
 
 assign BUSY = SIGN_STB | NUMBER_STB | busy;
 assign OUT = result;
+assign OUT_STB = (result != 0) && NUMBER_STB && SIGN_STB  ? 1 : 0;
 
 //**************************************************************************************************
 
